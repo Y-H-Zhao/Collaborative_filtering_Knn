@@ -1,0 +1,56 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May 12 17:52:11 2018
+
+@author: ZYH
+"""
+'''
+构建机器学习流水线，scikit-learn库中包括了机器学习流水线的方法，
+指定函数，他就会构建一个组合对象，是数据通过整个流水线
+'''
+
+'''
+本案例对生成数据首先选取k个最好的特征，减少计算复杂度--基于单变量的特征选择
+然后用随机森林分类器分类
+'''
+
+from sklearn.datasets import samples_generator
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import SelectKBest,f_regression
+from sklearn.pipeline import Pipeline #流水线
+'''
+#生成一些示例数据 100个数据 20特征 
+n_informative : int, optional (default=2) The number of informative features.
+n_classes=2
+'''
+X,y = samples_generator.make_classification(
+        n_samples=100, n_informative=4, n_features= 20, n_redundant= 0, random_state= 5)
+#实例化一个特征选择器 选用回归方法测试特征
+selector_k_best=SelectKBest(f_regression, k=10)
+
+#实例化一个随机森林分类器
+classfier = RandomForestClassifier(n_estimators=50, max_depth= 4)
+
+#构建流水线 两个函数，特征选择 随机森林 分别起名字
+pipeline_classfier = Pipeline([('selector',selector_k_best),('rf',classfier)])
+
+#如果想修改流水线中函数的参数 比如’selector‘中k=6...
+#pipeline_classfier.set_params(selector__k=6,rf__n_estimators=25)
+
+#训练分类器
+pipeline_classfier.fit(X,y)
+
+#训练数据输出结果
+prediction = pipeline_classfier.predict(X)
+print("\n prediction: \n",prediction)
+
+#评价分类器性能
+print("\n Score:",pipeline_classfier.score(X,y))
+
+#查看哪些特征被选 
+feature_status = pipeline_classfier.named_steps['selector'].get_support()
+selector_features = []
+for count, item in enumerate(feature_status):
+    if item:
+        selector_features.append(count)
+print("\n Selector_features (0-index):",', '.join([str(x) for x in selector_features]))
